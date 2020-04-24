@@ -16,10 +16,12 @@ const { getDirFileName } = require('./utils');
 const { exec } = require('child_process');
 
 function Project(options) {
+    console.log('optins = ', options);
     // config配置问询命令行中的数据
     this.config = Object.assign({
         name: '',
-        description: ''
+        description: '',
+        version: '1.0.0'
     }, options);
     const store = memFs.create();
     this.memFsEditor = editor.create(store);
@@ -37,7 +39,7 @@ Project.prototype.inquire = function () {
     const prompts = [];
     const {name, description} = this.config;
 
-    // 询问name、description
+    // 询问name、description，version
     if (typeof name !== 'string') {
         prompts.push({
             type: 'input',
@@ -77,16 +79,23 @@ Project.prototype.inquire = function () {
             message: '请输入项目描述'
         });
     }
+    if (typeof version !== 'string') {
+        prompts.push({
+            type: 'input',
+            name: 'version',
+            message: '请输入版本号'
+        });
+    }
     return inquirer.prompt(prompts);
 };
 
-// 模板替换，源文件路径、目标文件路径、替换文本字段
+// 模板替换，source--源文件路径、dest--目标文件路径、data--替换文本字段
 Project.prototype.injectTemplate = function(source, dest, data) {
     this.memFsEditor.copyTpl(source, dest, data);
 };
 
 Project.prototype.generate = function () {
-    const {name, description} = this.config;
+    const {name, description, version} = this.config;
     const projectPath = path.join(process.cwd(), name); // 当前路径名
     const downloadPath = path.join(projectPath, '__download__'); // 将文件下载到当前路径下的 __download__目录下
 
@@ -109,19 +118,21 @@ Project.prototype.generate = function () {
 
         copyFiles.forEach(file => {
             fse.copySync(path.join(downloadPath, file), path.join(projectPath, file));
+            console.log(`${chalk.green('✔ ')}${chalk.grey(`创建: ${projectName}/${file}`)}`);
         });
 
         // 复制文件后，替换文件中的内容
         INJECT_FILES.forEach(file => {
             this.injectTemplate(path.join(downloadPath, file), path.join(name, file), {
                 name,
-                description
+                description,
+                version
             });
         });
         this.memFsEditor.commit(() => {});
         this.memFsEditor.commit(() => {
             INJECT_FILES.forEach(file => {
-                console.log('file = ', '成功');
+                console.log(`${chalk.green('✔ ')}${chalk.grey(`创建: ${projectName}/${file}`)}`);
             });
 
             fse.remove(downloadPath); // 删除下载的模板

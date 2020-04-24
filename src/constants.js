@@ -1,2 +1,2 @@
-exports.TEMPLATE_GIT_REPO = 'direct:https://github.com/jackie-gan/vue-spa-template.git';
+exports.TEMPLATE_GIT_REPO = 'direct:https://github.com/FreshHan163/testcli.git';
 exports.INJECT_FILES = ['package.json'];
