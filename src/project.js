@@ -10,8 +10,8 @@ const {TEMPLATE_GIT_REPO, INJECT_FILES} = require('./constants.js');
 const chalk = require('chalk');
 const ora = require('ora');
 const path = require('path');
-const memFs = require('mem-fs');
-const editor = require('mem-fs-editor'); // 负责模板的复制、和字符串嵌入，依赖于mem-fs
+const memFs = require('mem-fs'); // 在内存中创建一个临时的文件store
+const editor = require('mem-fs-editor'); // 负责模板的复制、和字符串嵌入，依赖于mem-fs；以ejs的形式去编辑我们的文件
 const { getDirFileName } = require('./utils');
 const { exec } = require('child_process');
 
@@ -37,23 +37,29 @@ Project.prototype.create = function () {
 
 Project.prototype.inquire = function () {
     const prompts = [];
-    const {name, description} = this.config;
+    const {name, description, version} = this.config;
 
     // 询问name、description，version
-    if (typeof name !== 'string') {
+    if (typeof name !== 'string' || name === '') {
+        // prompts.push({
+        //     type: 'input',
+        //     name: 'name',
+            // message: '请输入项目名',
+            // validate(input) {
+            //     if (!input) {
+            //         return '项目名不能为空';
+            //     }
+            //     if (fse.existsSync(input)) {
+            //         return '当前目录已存在同名项目，请更换项目名';
+            //     }
+            //     return true;
+            // }
+        // });
+        console.log('应该输入name');
         prompts.push({
             type: 'input',
             name: 'name',
-            message: '请输入项目名',
-            validate(input) {
-                if (!input) {
-                    return '项目名不能为空';
-                }
-                if (fse.existsSync(input)) {
-                    return '当前目录已存在同名项目，请更换项目名';
-                }
-                return true;
-            }
+            message: '请输入项目名111'
         });
     } else if (fse.existsSync(name)) {
         prompts.push({
@@ -91,11 +97,13 @@ Project.prototype.inquire = function () {
 
 // 模板替换，source--源文件路径、dest--目标文件路径、data--替换文本字段
 Project.prototype.injectTemplate = function(source, dest, data) {
+    console.log('data = ', data);
     this.memFsEditor.copyTpl(source, dest, data);
 };
 
 Project.prototype.generate = function () {
     const {name, description, version} = this.config;
+    console.log('this.config = ', this.config);
     const projectPath = path.join(process.cwd(), name); // 当前路径名
     const downloadPath = path.join(projectPath, '__download__'); // 将文件下载到当前路径下的 __download__目录下
 
@@ -103,36 +111,39 @@ Project.prototype.generate = function () {
     const downloadSpinner = ora('正在下载目标模板...');
     downloadSpinner.start();
     download(TEMPLATE_GIT_REPO, downloadPath, {clone: true}, err => {
+        console.log('err => ', err);
         if (err) {
             downloadSpinner.color = 'red';
             downloadSpinner.fail(err.message);
             return;
         }
 
+        console.log('下载成功');
         // 下载成功
         downloadSpinner.color = 'green';
         downloadSpinner.succeed('模板下载成功');
 
         // 复制文件，从 __donwload__，拷贝到 项目文件夹下
         const copyFiles = getDirFileName(downloadPath);
-
+        console.log('开始复制', copyFiles);
         copyFiles.forEach(file => {
             fse.copySync(path.join(downloadPath, file), path.join(projectPath, file));
-            console.log(`${chalk.green('✔ ')}${chalk.grey(`创建: ${projectName}/${file}`)}`);
+            console.log(`${chalk.green('✔1 ')}${chalk.grey(`创建: ${name}/${file}`)}`);
         });
 
-        // 复制文件后，替换文件中的内容
+        // 复制文件后，替换package.json文件中的定制的name、version、path;
         INJECT_FILES.forEach(file => {
+            console.log('定制化替换', file);
             this.injectTemplate(path.join(downloadPath, file), path.join(name, file), {
                 name,
                 description,
                 version
             });
         });
-        this.memFsEditor.commit(() => {});
+
         this.memFsEditor.commit(() => {
             INJECT_FILES.forEach(file => {
-                console.log(`${chalk.green('✔ ')}${chalk.grey(`创建: ${projectName}/${file}`)}`);
+                console.log(`${chalk.green('✔2 ')}${chalk.grey(`创建: ${name}/${file}`)}`);
             });
 
             fse.remove(downloadPath); // 删除下载的模板

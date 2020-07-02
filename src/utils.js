@@ -27,7 +27,8 @@ function getPackageVersion() {
  */
 function getDirFileName(dir) {
     try {
-        const files = fs.readdirSync(dir);
+        const files = fse.readdirSync(dir);
+        console.log('files.length = ', files.length);
         const filesToCopy = [];
         files.forEach(file => {
             // package.json文件已存在，不用再重复拷贝
@@ -36,6 +37,7 @@ function getDirFileName(dir) {
             }
             filesToCopy.push(file);
         });
+        console.log('filesToCopy.length = ', filesToCopy.length);
         return filesToCopy;
     } catch (e) {
         return [];

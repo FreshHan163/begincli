@@ -13,13 +13,13 @@ program
 let { name, description, version } = program;
 const args = program.args;
 
-name = args[0] || name;
+name = args[0];
 
 console.log('name = ', name);
 console.log('name !== string ', typeof name !== 'string');
 
 const project = new Project({
-  projectName: name,
+  name,
   description,
   version
 });
