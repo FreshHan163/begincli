@@ -1,4 +1,9 @@
-
-.DS_Store
+output
+.svn
 node_modules
+.git
+.DS_Store
+dist
+.idea
+.zip
 project
