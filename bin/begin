@@ -7,9 +7,15 @@ const { logPackageVersion } = require('../src/utils');
 logPackageVersion();
 
 program
+  .description('欢迎使用react-cli脚手架')
   .usage('<command> [options]') // 在帮助信息第一行中，显示命令的描述
   // []方括号表示可选，<>尖括号表示必须; command为最高层置顶子命令
   // 添加init为子命令，当有第二个参数，且没有显示调用action(fn)时，就会启动子命令程序，否则会报错
   .command('init [name]', 'init testbegin project')
-  .description('测试数据哦')
+  .parse(process.argv);
+
+// list命令
+program
+  .command('list', '查看模板列表')
+  .description('查看模板列表')
   .parse(process.argv);

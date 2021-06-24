@@ -1,0 +1,11 @@
+#! /usr/bin/env node
+'use strict'
+
+const program = require('commander');
+
+console.log('查看模板列表 list');
+
+console.log('args = ', program.args);
+if (!program.args.length) {
+    program.help();
+}
